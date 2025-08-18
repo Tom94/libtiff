@@ -1084,7 +1084,7 @@ static int JPEGSetupDecode(TIFF *tif)
     TIFFDirectory *td = &tif->tif_dir;
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(FROM_TIF_JPEG_12)
-    if (tif->tif_dir.td_bitspersample == 12)
+    if (tif->tif_dir.td_bitspersample > 8 && tif->tif_dir.td_bitspersample <= 12)
     {
         /* We pass a pointer to a copy of otherSettings, since */
         /* TIFFReInitJPEG_12() will clear sp */
@@ -1143,7 +1143,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     JPEGState state;
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(FROM_TIF_JPEG_12)
-    if (tif->tif_dir.td_bitspersample == 12)
+    if (tif->tif_dir.td_bitspersample > 8 && tif->tif_dir.td_bitspersample <= 12)
         return TIFFJPEGIsFullStripRequired_12(tif);
 #endif
 
@@ -1289,8 +1289,7 @@ int TIFFJPEGIsFullStripRequired(TIFF *tif)
     sp->cinfo.d.data_precision = td->td_bitspersample;
     sp->cinfo.d.bits_in_jsample = td->td_bitspersample;
 #else
-    if (td->td_bitspersample != BITS_IN_JSAMPLE ||
-        sp->cinfo.d.data_precision != td->td_bitspersample)
+    if (sp->cinfo.d.data_precision > td->td_bitspersample)
     {
         TIFFErrorExtR(tif, module, "Improper JPEG data precision");
         return (0);
@@ -1544,7 +1543,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
          * For 6B, only use temporary buffer for 12 bit imagery.
          * For Mk1 always use it.
          */
-        if (sp->cinfo.d.data_precision == 12)
+        if (sp->cinfo.d.data_precision > 8 && sp->cinfo.d.data_precision <= 16)
         {
             line_work_buf = (TIFF_JSAMPROW)_TIFFmallocExt(
                 tif, sizeof(short) * sp->cinfo.d.output_width *
@@ -1568,7 +1567,7 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                     return (0);
                 }
 
-                if (sp->cinfo.d.data_precision == 12)
+                if (sp->cinfo.d.data_precision > 8 && sp->cinfo.d.data_precision <= 12)
                 {
                     int value_pairs = (sp->cinfo.d.output_width *
                                        sp->cinfo.d.num_components) /
@@ -1586,6 +1585,23 @@ static int JPEGDecode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                             (unsigned char)(((in_ptr[0] & 0xf) << 4) |
                                             ((in_ptr[1] & 0xf00) >> 8));
                         out_ptr[2] = (unsigned char)(((in_ptr[1] & 0xff) >> 0));
+                    }
+                }
+                if (sp->cinfo.d.data_precision > 12 && sp->cinfo.d.data_precision <= 16)
+                {
+                    int value_pairs = (sp->cinfo.d.output_width *
+                                       sp->cinfo.d.num_components) /
+                                      2;
+                    int iPair;
+
+                    for (iPair = 0; iPair < value_pairs; iPair++)
+                    {
+                        unsigned char *out_ptr =
+                            ((unsigned char *)buf) + iPair * 2;
+                        TIFF_JSAMPLE *in_ptr = line_work_buf + iPair * 2;
+
+                        out_ptr[0] = in_ptr[0];
+                        out_ptr[1] = in_ptr[1];
                     }
                 }
                 else if (sp->cinfo.d.data_precision == 8)
@@ -1926,7 +1942,7 @@ static int JPEGSetupEncode(TIFF *tif)
     static const char module[] = "JPEGSetupEncode";
 
 #if defined(JPEG_DUAL_MODE_8_12) && !defined(FROM_TIF_JPEG_12)
-    if (tif->tif_dir.td_bitspersample == 12)
+    if (tif->tif_dir.td_bitspersample > 8 && tif->tif_dir.td_bitspersample <= 12)
     {
         /* We pass a pointer to a copy of otherSettings, since */
         /* TIFFReInitJPEG_12() will clear sp */
