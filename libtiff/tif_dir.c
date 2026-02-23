@@ -465,9 +465,9 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             {
                 if (tif->tif_mode != O_RDONLY)
                     goto badvalue32;
-                TIFFWarningExtR(
-                    tif, tif->tif_name,
-                    "Nonstandard tile width %" PRIu32 ", convert file", v32);
+                // TIFFWarningExtR(
+                //     tif, tif->tif_name,
+                //     "Nonstandard tile width %" PRIu32 ", convert file", v32);
             }
             td->td_tilewidth = v32;
             tif->tif_flags |= TIFF_ISTILED;
@@ -478,9 +478,9 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             {
                 if (tif->tif_mode != O_RDONLY)
                     goto badvalue32;
-                TIFFWarningExtR(
-                    tif, tif->tif_name,
-                    "Nonstandard tile length %" PRIu32 ", convert file", v32);
+                // TIFFWarningExtR(
+                //     tif, tif->tif_name,
+                //     "Nonstandard tile length %" PRIu32 ", convert file", v32);
             }
             td->td_tilelength = v32;
             tif->tif_flags |= TIFF_ISTILED;
@@ -806,12 +806,12 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
 
                 if (tv->count == 0)
                 {
-                    TIFFWarningExtR(tif, module,
-                                    "%s: Null count for \"%s\" (type "
-                                    "%u, writecount %d, passcount %d)",
-                                    tif->tif_name, fip->field_name,
-                                    fip->field_type, fip->field_writecount,
-                                    fip->field_passcount);
+                    // TIFFWarningExtR(tif, module,
+                    //                 "%s: Null count for \"%s\" (type "
+                    //                 "%u, writecount %d, passcount %d)",
+                    //                 tif->tif_name, fip->field_name,
+                    //                 fip->field_type, fip->field_writecount,
+                    //                 fip->field_passcount);
                     break;
                 }
 
